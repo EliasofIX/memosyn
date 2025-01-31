@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoSyn</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #1a1a1a;
+            color: #F5F5F5;
+        }
+
+        #editor-container {
+            margin: 20px;
+        }
+
+        #note-display {
+            width: 100%;
+            min-height: 300px;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #1a1a1a;
+            color: #F5F5F5;
+            word-wrap: break-word;
+            border: 1px solid #333;
+        }
+
+        #note-display a {
+            color: #61dafb;
+            text-decoration: none;
+        }
+
+        #note-display a:hover {
+            text-decoration: underline;
+        }
+
+        #status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            margin: 10px;
+            font-size: 14px;
+            color: #CCC;
+        }
+
+        #search-overlay, #settings-panel {
+            position: fixed;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            z-index: 1000;
+        }
+
+        #search-overlay {
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 20px;
+        }
+
+        #search-input {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+            background-color: #1a1a1a;
+            color: #F5F5F5;
+            border: 1px solid #333;
+        }
+
+        #search-results {
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .search-result {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #333;
+        }
+
+        .search-result:hover,
+        .search-result.selected {
+            background-color: #333;
+        }
+
+        #settings-icon {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 24px;
+            color: #CCC;
+            z-index: 1001;
+        }
+
+        #settings-panel {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+        }
+
+        .status-message {
+            position: fixed;
+            bottom: 50px;
+            right: 20px;
+            background-color: #333;
+            color: #F5F5F5;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="search-overlay" hidden>
+        <input type="text" id="search-input" placeholder="Search notes...">
+        <div id="search-results"></div>
+    </div>
+
+    <div id="editor-container">
+        <div id="note-display" contenteditable="true"></div>
+    </div>
+
+    <div id="settings-panel" hidden>
+        <h2>Settings</h2>
+        <div>
+            <button id="export-notes">Export All Notes</button>
+        </div>
+        <button id="close-settings">Close</button>
+    </div>
+
+    <div id="settings-icon">
+        <i class="fa-solid fa-gear"></i>
+    </div>
+
+    <div class="status-message" id="status-message"></div>
+    <div id="status-bar">Alt+N: New | Alt+S: Save | Alt+F: Find | Alt+X: Delete</div>
+
+    <script>
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const modifierKey = isMac ? 'Ctrl' : 'Alt';
+
+        let currentNoteId = null;
+        let notes = new Map(JSON.parse(localStorage.getItem('memosyn-notes') || '[]'));
+        let selectedSearchIndex = -1;
+
+        const editor = document.getElementById('note-display');
+        const searchOverlay = document.getElementById('search-overlay');
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const statusMessage = document.getElementById('status-message');
+        const settingsIcon = document.getElementById('settings-icon');
+        const settingsPanel = document.getElementById('settings-panel');
+        const exportNotesBtn = document.getElementById('export-notes');
+        const closeSettingsBtn = document.getElementById('close-settings');
+
+        function getFilename() {
+            const firstLine = editor.innerText.split('\n')[0];
+            return firstLine.includes(':') ? firstLine.split(':')[0].trim() : 'untitled';
+        }
+
+        function saveCurrentNote() {
+            const filename = getFilename();
+            const content = editor.innerText;
+            
+            notes.set(filename, content);
+            localStorage.setItem('memosyn-notes', JSON.stringify([...notes]));
+            currentNoteId = filename;
+            showStatus('Note saved successfully');
+        }
+
+        function newNote() {
+            currentNoteId = null;
+            editor.innerText = 'untitled:\n';
+            editor.focus();
+        }
+
+        function openNote(filename) {
+            if (notes.has(filename)) {
+                editor.innerText = notes.get(filename);
+                currentNoteId = filename;
+                hideOverlays();
+            }
+        }
+
+        function deleteNote(filename) {
+            if (notes.has(filename)) {
+                notes.delete(filename);
+                localStorage.setItem('memosyn-notes', JSON.stringify([...notes]));
+                showStatus(`Note "${filename}" deleted`);
+                
+                if (currentNoteId === filename) {
+                    const nextNote = notes.keys().next().value;
+                    if (nextNote) {
+                        openNote(nextNote);
+                    } else {
+                        newNote();
+                    }
+                }
+            }
+        }
+
+        function toggleSearch() {
+            searchOverlay.hidden = !searchOverlay.hidden;
+            if (!searchOverlay.hidden) {
+                searchInput.focus();
+                updateSearchResults();
+            } else {
+                selectedSearchIndex = -1;
+            }
+        }
+
+        function updateSearchResults() {
+            const query = searchInput.value.toLowerCase();
+            searchResults.innerHTML = '';
+            selectedSearchIndex = -1;
+            
+            const results = Array.from(notes.entries()).filter(([filename, content]) => 
+                filename.toLowerCase().includes(query) || 
+                content.toLowerCase().includes(query)
+            );
+
+            results.forEach(([filename], index) => {
+                const div = document.createElement('div');
+                div.className = 'search-result';
+                div.textContent = filename;
+                div.onclick = () => openNote(filename);
+                searchResults.appendChild(div);
+            });
+        }
+
+        function handleSearchNavigation(e) {
+            if (!searchOverlay.hidden) {
+                const results = document.querySelectorAll('.search-result');
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedSearchIndex = (selectedSearchIndex + 1) % results.length;
+                    updateSelectedResult();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedSearchIndex = (selectedSearchIndex - 1 + results.length) % results.length;
+                    updateSelectedResult();
+                } else if (e.key === 'Enter' && selectedSearchIndex !== -1) {
+                    e.preventDefault();
+                    results[selectedSearchIndex].click();
+                }
+            }
+        }
+
+        function updateSelectedResult() {
+            const results = document.querySelectorAll('.search-result');
+            results.forEach((result, index) => {
+                result.classList.toggle('selected', index === selectedSearchIndex);
+            });
+        }
+
+        function showStatus(message) {
+            statusMessage.textContent = message;
+            statusMessage.style.display = 'block';
+            setTimeout(() => {
+                statusMessage.style.display = 'none';
+            }, 3000);
+        }
+
+        function hideOverlays() {
+            searchOverlay.hidden = true;
+            settingsPanel.hidden = true;
+        }
+
+        async function exportNotes() {
+            const zip = new JSZip();
+            const folder = zip.folder("memosyntext");
+            
+            notes.forEach((content, filename) => {
+                folder.file(`${filename}.txt`, content);
+            });
+
+            const content = await zip.generateAsync({type: "blob"});
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(content);
+            link.download = "memosyntext.zip";
+            link.click();
+            showStatus('Export completed');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            const isModifier = isMac ? e.ctrlKey : e.altKey;
+            
+            if (isModifier) {
+                const key = e.key.toUpperCase();
+                
+                switch (key) {
+                    case 'N':
+                        newNote();
+                        break;
+                    case 'S':
+                        saveCurrentNote();
+                        break;
+                    case 'F':
+                        toggleSearch();
+                        break;
+                    case 'X':
+                        if (currentNoteId) {
+                            deleteNote(currentNoteId);
+                        }
+                        break;
+                }
+                e.preventDefault();
+            }
+
+            handleSearchNavigation(e);
+
+            if (e.key === 'Escape') {
+                hideOverlays();
+            }
+        });
+
+        settingsIcon.addEventListener('click', () => {
+            settingsPanel.hidden = !settingsPanel.hidden;
+        });
+
+        closeSettingsBtn.addEventListener('click', () => {
+            settingsPanel.hidden = true;
+        });
+
+        exportNotesBtn.addEventListener('click', exportNotes);
+        searchInput.oninput = updateSearchResults;
+
+        function init() {
+            if (notes.size > 0) {
+                const firstNote = notes.keys().next().value;
+                openNote(firstNote);
+            } else {
+                newNote();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
