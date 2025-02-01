@@ -8,26 +8,54 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0;
             padding: 0;
             background-color: #1a1a1a;
             color: #F5F5F5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         #editor-container {
-            margin: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+            max-width: 800px;
+            width: 100%;
+            box-sizing: border-box;
+            margin-left: 15%;
         }
 
         #note-display {
-            width: 100%;
-            min-height: 300px;
-            padding: 10px;
-            font-size: 16px;
-            background-color: #1a1a1a;
+            flex: 1;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            background-color: transparent;
             color: #F5F5F5;
             word-wrap: break-word;
-            border: 1px solid #333;
+            outline: none;
+            padding: 1rem 0;
+            text-align: left;
+        }
+
+        #filename-display {
+            color: #666;
+            font-size: 0.9rem;
+            padding: 0.5rem 0;
+            transition: opacity 0.3s ease;
+            opacity: 0.7;
+            text-align: left;
+        }
+
+        .hidden {
+            opacity: 0 !important;
+        }
+
+        #note-display:focus {
+            outline: none;
         }
 
         #note-display a {
@@ -43,45 +71,52 @@
             position: fixed;
             bottom: 0;
             left: 0;
-            margin: 10px;
-            font-size: 14px;
-            color: #CCC;
-        }
-
-        #search-overlay, #settings-panel {
-            position: fixed;
-            background-color: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 5px;
-            z-index: 1000;
+            margin: 1rem;
+            font-size: 0.85rem;
+            color: #666;
+            background-color: rgba(26, 26, 26, 0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            backdrop-filter: blur(10px);
         }
 
         #search-overlay {
+            position: fixed;
             top: 20%;
             left: 50%;
             transform: translateX(-50%);
-            padding: 20px;
+            background-color: #242424;
+            border-radius: 8px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            z-index: 1000;
+            width: 90%;
+            max-width: 500px;
         }
 
         #search-input {
-            width: 300px;
-            padding: 10px;
-            font-size: 16px;
+            width: 100%;
+            padding: 0.8rem;
+            font-size: 1rem;
             background-color: #1a1a1a;
             color: #F5F5F5;
             border: 1px solid #333;
+            border-radius: 4px;
+            box-sizing: border-box;
         }
 
         #search-results {
-            margin-top: 10px;
-            max-height: 200px;
+            margin-top: 1rem;
+            max-height: 300px;
             overflow-y: auto;
+            border-radius: 4px;
         }
 
         .search-result {
-            padding: 10px;
+            padding: 0.8rem;
             cursor: pointer;
             border-bottom: 1px solid #333;
+            transition: background-color 0.2s ease;
         }
 
         .search-result:hover,
@@ -91,30 +126,90 @@
 
         #settings-icon {
             position: fixed;
-            top: 20px;
-            right: 20px;
+            top: 1.5rem;
+            right: 1.5rem;
             cursor: pointer;
-            font-size: 24px;
-            color: #CCC;
+            font-size: 1.2rem;
+            color: #666;
             z-index: 1001;
+            transition: color 0.2s ease;
+        }
+
+        #settings-icon:hover {
+            color: #F5F5F5;
         }
 
         #settings-panel {
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            padding: 20px;
+            background-color: #242424;
+            border-radius: 8px;
+            padding: 2rem;
+            z-index: 1000;
+            min-width: 300px;
+        }
+
+        #settings-panel h2 {
+            margin-top: 0;
+            color: #F5F5F5;
+        }
+
+        button {
+            background-color: #333;
+            color: #F5F5F5;
+            border: none;
+            padding: 0.8rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: #444;
         }
 
         .status-message {
             position: fixed;
-            bottom: 50px;
-            right: 20px;
+            bottom: 3rem;
+            right: 1.5rem;
             background-color: #333;
             color: #F5F5F5;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 0.8rem 1.2rem;
+            border-radius: 4px;
             display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+
+        @media (max-width: 768px) {
+            #editor-container {
+                margin-left: 2rem;
+                padding: 1rem;
+            }
         }
     </style>
 </head>
@@ -126,6 +221,7 @@
 
     <div id="editor-container">
         <div id="note-display" contenteditable="true"></div>
+        <div id="filename-display"></div>
     </div>
 
     <div id="settings-panel" hidden>
@@ -152,6 +248,7 @@
         let selectedSearchIndex = -1;
 
         const editor = document.getElementById('note-display');
+        const filenameDisplay = document.getElementById('filename-display');
         const searchOverlay = document.getElementById('search-overlay');
         const searchInput = document.getElementById('search-input');
         const searchResults = document.getElementById('search-results');
@@ -161,9 +258,16 @@
         const exportNotesBtn = document.getElementById('export-notes');
         const closeSettingsBtn = document.getElementById('close-settings');
 
+        function updateFilenameDisplay() {
+            const content = editor.innerText.trim();
+            const filename = content.split('\n')[0];
+            filenameDisplay.textContent = filename || 'Untitled Note';
+            filenameDisplay.classList.toggle('hidden', content.length === 0);
+        }
+
         function getFilename() {
             const firstLine = editor.innerText.split('\n')[0];
-            return firstLine.includes(':') ? firstLine.split(':')[0].trim() : 'untitled';
+            return firstLine.trim() || 'untitled';
         }
 
         function saveCurrentNote() {
@@ -178,14 +282,16 @@
 
         function newNote() {
             currentNoteId = null;
-            editor.innerText = 'untitled:\n';
+            editor.innerText = '';
             editor.focus();
+            updateFilenameDisplay();
         }
 
         function openNote(filename) {
             if (notes.has(filename)) {
                 editor.innerText = notes.get(filename);
                 currentNoteId = filename;
+                updateFilenameDisplay();
                 hideOverlays();
             }
         }
@@ -289,6 +395,8 @@
             link.click();
             showStatus('Export completed');
         }
+
+        editor.addEventListener('input', updateFilenameDisplay);
 
         document.addEventListener('keydown', (e) => {
             const isModifier = isMac ? e.ctrlKey : e.altKey;
