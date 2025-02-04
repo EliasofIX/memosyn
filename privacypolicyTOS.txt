@@ -1,0 +1,63 @@
+Privacy Policy
+1. Introduction
+Memosyn ("we," "our," or "us") is an open-source project designed to allow users to save and access notes using their Google Drive account. We do not collect or store personal data. By using this service, you agree to the following terms.
+
+2. Information We Access
+We do not store any personal data. The service accesses:
+
+Your Google Account email (for authentication purposes)
+Files within the “Memosyn” folder in your Google Drive (for saving and retrieving notes)
+This data is only used to authenticate your account and store/retrieve notes.
+
+3. How Your Information Is Used
+Your information is used to:
+
+Authenticate your access via Google
+Save and retrieve your notes from your Google Drive
+We do not track, analyze, or share your data in any way.
+
+4. Third-Party Services
+This service uses the Google Drive API for storing and retrieving your notes. Google’s Privacy Policy applies when using their services: Google Privacy Policy.
+
+5. Data Security
+Since your data is stored directly in your own Google Drive, we do not have access to it. You are in full control of your data, and Google ensures its security.
+
+6. Your Rights
+You have full control over your data. You can:
+
+Delete your notes from Google Drive at any time
+Revoke access to Memosyn via Google’s security settings
+7. Changes to This Policy
+This Privacy Policy may be updated. Continued use of the service means you agree to any changes.
+
+8. Contact Information
+If you have any questions or concerns, please reach out via [email/contact method of choice].
+
+Terms of Service
+1. Acceptance of Terms
+By using Memosyn, you agree to these Terms of Service. If you do not agree, do not use the service.
+
+2. Description of Service
+Memosyn is an open-source tool that enables users to store and retrieve notes using their Google Drive account. We do not provide storage or access to user data beyond authentication.
+
+3. User Responsibilities
+You agree to:
+
+Use the service legally and responsibly
+Be responsible for managing your own Google Drive content
+Not exploit or misuse the service
+4. Disclaimers & Limitations of Liability
+This service is provided "as is" without warranties.
+We are not responsible for any data loss, security issues, or other problems caused by Google Drive or other third-party services.
+We are not liable for any damages resulting from the use of this service.
+5. Termination
+We reserve the right to suspend or discontinue access to the service at any time.
+
+6. Changes to Terms
+We may update these Terms at any time. Continued use of the service constitutes acceptance of any changes.
+
+7. Governing Law
+Since this is an open-source and anonymous project, we do not have a specific jurisdiction governing these terms.
+
+8. Contact Information
+For any inquiries or issues, contact us at [email/contact method of choice].
